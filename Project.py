@@ -33,9 +33,9 @@ def crop_image(name):
     #cv2.rectangle(im,(x,y),(x+w,y+h),(0,255,0),2)
 
 
-    crop_img = im[y:y+h+5,x:x+w+5]
+    #crop_img = im[y:y+h+5,x:x+w+5]
 
-    return crop_img, x, y, w, h
+    return x, y, w, h
 
 
 
@@ -49,7 +49,9 @@ def Function():
 def Procesar():
 
 
-    size = 1800, 1200 #Tamano en la que se exportara la imagen
+    size = 1022, 653 #Tamano en la que se exportara la imagen
+    ErrorCount = 0
+    Success = 0
     
     botonCinco = ttk.Button(ventana, text = "Ir a la carpeta procesada", command = Function, state = ACTIVE).place(height = 30, width = 300,x = 240, y = 220)
     
@@ -98,19 +100,32 @@ def Procesar():
       
         im = Image.open(infile) # Aqui abre el archivo *.jpg
         #im.thumbnail(size, Image.ANTIALIAS) # Aqui se le asigna el size a la imagen que se va a exportar
-        image, x, y, w, h = crop_image(infile)
-        im = image
-        im = cv2.resize(im, size) 
+        x, y, w, h = crop_image(infile)
         #im.crop((int(x+x-x*0.20)+10, y+y/2+10, w+y, h - h/4 - 40))
-        im = im[y: y+h/4, x+x/4:x+w+w/2]
-        cv2.imshow('Load', im)
+        image = im.crop((x, y, w+x, y+h))
+        im = image
+        im.thumbnail(size, Image.ANTIALIAS)
+        
+        #im = im.crop((int(x*0.70)+10, y/2 + 10 , w , h/4 + 40))
+        #im = im.crop((294, 135, 1022, 203))
+        im = im.crop((294, 100, 1022, 250))
+        
+##        x = int(x*0.70)+10
+##        y = y/2 + 10
+##        w = w
+##        h = h/4 + 40
+
+        #print x, y, w, h
+        
+        #im = im[y: y+h/4, x+x/4:x+w+w/2]
+        #cv2.imshow('Load', im)
+        #im.show()
         
         
         text = image_to_string(im)
 ##        text = image_file_to_string(infile)
 ##        text = image_file_to_string(infile, graceful_errors=True)
-        
-        
+       # print(text)
 
 
         filename = Archivos(text, location) # ******** Aqui deberiaa recibir como parametro el texto -> prueba generado de la imagen con pytesseract package ********
@@ -126,12 +141,14 @@ def Procesar():
         if(flag == 0):
             T.insert(END, str(location) + str(filename) + ".jpg" + "\n")
             Success+=1
-            cv2.imwrite(location + filename + ".jpg", image) #Exporta la imagen y la guarda con el nombre file que retorno el metodo Archivos
+            #cv2.imwrite(location + filename + ".jpg", image) #Exporta la imagen y la guarda con el nombre file que retorno el metodo Archivos
+            image.save(location + filename + ".jpg")
 
         else:
             T.insert(END, str(location_two) + str(filename) + ".jpg" + "\n")
             ErrorCount += 1
-            cv2.imwrite(location_two + filename + ".jpg", image) #Exporta la imagen y la guarda con el nombre file que retorno el metodo Archivos
+            #cv2.imwrite(location_two + filename + ".jpg", image) #Exporta la imagen y la guarda con el nombre file que retorno el metodo Archivos
+            image.save(location_two + filename + ".jpg")
 
         cnt+=1
 
