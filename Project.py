@@ -13,7 +13,14 @@ from pytesser import image_to_string, image_file_to_string
 def crop_image(name):
     
     
-    im = cv2.imread(name)
+    try:
+        im = cv2.imread(name)
+    except:
+        x = 0
+        y = 0
+        w = 0
+        h = 0
+        return x, y, w, h
     #im = cv2.medianBlur(im,5)
     hsv_img = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
     COLOR_MIN = np.array([10, 10, 10],np.uint8)
@@ -52,6 +59,7 @@ def Procesar():
     size = 1022, 653 #Tamano en la que se exportara la imagen
     ErrorCount = 0
     Success = 0
+    ErrorDesconocido = 0
     
     botonCinco = ttk.Button(ventana, text = "Ir a la carpeta procesada", command = Function, state = ACTIVE).place(height = 30, width = 300,x = 240, y = 220)
     
@@ -80,8 +88,7 @@ def Procesar():
     
 
     cnt = 1 #Para renombrar strings con errores
-    ErrorCount = 0
-    Success = 0
+  
 
     suma = (len(glob.glob(origen + "*.jpg")) + len(glob.glob(origen + "*.png")) + len(glob.glob(origen + "*.jpeg")) + len(glob.glob(origen + "*.gif")) + len(glob.glob(origen + "*.wmp")))
     if(suma != 0):
@@ -95,12 +102,20 @@ def Procesar():
         ventana.update()
         
         string = EvaluarString(infile)
+        #print infile
+        #print string
         os.rename(infile, string)
         infile = string
+        
       
         im = Image.open(infile) # Aqui abre el archivo *.jpg
         #im.thumbnail(size, Image.ANTIALIAS) # Aqui se le asigna el size a la imagen que se va a exportar
         x, y, w, h = crop_image(infile)
+        
+        if(x == 0 and y == 0 and w == 0 and h == 0):
+            ErrorDesconocido += 1
+            continue
+        
         #im.crop((int(x+x-x*0.20)+10, y+y/2+10, w+y, h - h/4 - 40))
         image = im.crop((x, y, w+x, y+h))
         im = image
@@ -108,7 +123,9 @@ def Procesar():
         
         #im = im.crop((int(x*0.70)+10, y/2 + 10 , w , h/4 + 40))
         #im = im.crop((294, 135, 1022, 203))
+        
         im = im.crop((294, 100, 1022, 250))
+        
         
 ##        x = int(x*0.70)+10
 ##        y = y/2 + 10
@@ -119,7 +136,7 @@ def Procesar():
         
         #im = im[y: y+h/4, x+x/4:x+w+w/2]
         #cv2.imshow('Load', im)
-        #im.show()
+        
         
         
         text = image_to_string(im)
@@ -159,7 +176,9 @@ def Procesar():
     root.title("Procesamiento de Datos OCR") # Definimos el titulo de la ventana
     Area = Text(root, height=5, width=40)
     Area.pack(side = LEFT)
-    Area.insert(END, "Imagenes Procesadas: " + str(suma) + "\nErrores: " + str(ErrorCount) + "\nSatisfactoriamente Procesadas: " + str(Success))
+    Area.insert(END, "Imagenes Procesadas: " + str(suma) + "\nErrores: " + str(ErrorCount) +
+                "\nSatisfactoriamente Procesadas: " + str(Success) + "\nSobreescritura (Repeticiones): " + str(suma - (ErrorCount + Success)) +
+                "\nErroresDesconocidos: " + str(ErrorDesconocido))
     progressbar.stop()
     #T.config(state = "disable")
     root.mainloop()
@@ -176,6 +195,42 @@ def EvaluarString(string): #Quita los espacios del nombre del archivo de imagen
     t = len(string)-1
     flag = t
     cnt = 0
+
+##    ¡	161	u’\xa1’	\xc2\xa1	\xa1	inverted exclamation mark
+##    ¿	191	u’\xbf’	\xc2\xbf	\xbf	inverted question mark
+##    Á	193	u’\xc1’	\xc3\x81	\xc1	Latin capital a with acute
+##    É	201	u’\xc9’	\xc3\x89	\xc9	Latin capital e with acute
+##    Í	205	u’\xcd’	\xc3\x8d	\xcd	Latin capital i with acute
+##    Ñ	209	u’\xd1’	\xc3\x91	\xd1	Latin capital n with tilde
+##    Ó	191	u’\xbf’	\xc3\x93	\xbf	Latin capital o with acute
+##    Ú	218	u’\xda’	\xc3\x9a	\xda	Latin capital u with acute
+##    Ü	220	u’\xdc’	\xc3\x9c	\xdc	Latin capital u with diaeresis
+##    á	225	u’\xe1’	\xc3\xa1	\xe1	Latin small a with acute
+##    é	233	u’\xe9’	\xc3\xa9	\xe9	Latin small e with acute
+##    í	237	u’\xed’	\xc3\xad	\xed	Latin small i with acute
+##    ñ	241	u’\xf1’	\xc3\xb1	\xf1	Latin small n with tilde
+##    ó	243	u’\xf3’	\xc3\xb3	\xf3	Latin small o with acute
+##    ú	250	u’\xfa’	\xc3\xba	\xfa	Latin small u with acute
+##    ü	252	u’\xfc’	\xc3\xbc	\xfc	Latin small u with diaeresis
+    
+    a = U'\xf1'
+    b = U'\xa1'
+    c = U'\xbf'
+    d = U'\xc1'
+    e = U'\xc9'
+    f = U'\xcd'
+    g = U'\xd1'
+    h = U'\xbf'
+    i = U'\xda'
+    j = U'\xdc'
+    k = U'\xe1'
+    l = U'\xed'
+    m = U'\xe9'
+    n = U'\xed'
+    o = U'\xf3'
+    p = U'\xfa'
+    q = U'\xfc'
+    
     while(t > 0):
         if(string[t] in "\*"):
             value = t
@@ -186,9 +241,11 @@ def EvaluarString(string): #Quita los espacios del nombre del archivo de imagen
 
         if(cnt <= value):
             final += string[cnt]
+
         
-        if(cnt > value and string[cnt] not in ' '):
+        if(cnt > value and string[cnt] not in (' ',a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q)):
             final += string[cnt]
+
         
         cnt+=1
 
