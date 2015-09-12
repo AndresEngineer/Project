@@ -104,8 +104,12 @@ def Procesar():
         string = EvaluarString(infile)
         #print infile
         #print string
-        os.rename(infile, string)
+        try:
+            os.rename(infile, string)
+        except:
+            pass
         infile = string
+        
         
       
         im = Image.open(infile) # Aqui abre el archivo *.jpg
@@ -124,7 +128,10 @@ def Procesar():
         #im = im.crop((int(x*0.70)+10, y/2 + 10 , w , h/4 + 40))
         #im = im.crop((294, 135, 1022, 203))
         
-        im = im.crop((294, 100, 1022, 250))
+        try:
+            im = im.crop((294, 100, 1022, 250))
+        except:
+            pass
         
         
 ##        x = int(x*0.70)+10
@@ -156,14 +163,16 @@ def Procesar():
 
         
         if(flag == 0):
-            T.insert(END, str(location) + str(filename) + ".jpg" + "\n")
+##            T.insert(END, str(location) + str(filename) + ".jpg" + "\n")
             Success+=1
+            T.insert(END, infile + "\n")
             #cv2.imwrite(location + filename + ".jpg", image) #Exporta la imagen y la guarda con el nombre file que retorno el metodo Archivos
             image.save(location + filename + ".jpg")
 
         else:
-            T.insert(END, str(location_two) + str(filename) + ".jpg" + "\n")
+##            T.insert(END, str(location_two) + str(filename) + ".jpg" + "\n")
             ErrorCount += 1
+            T.insert(END, infile + " # Error" + "\n" )
             #cv2.imwrite(location_two + filename + ".jpg", image) #Exporta la imagen y la guarda con el nombre file que retorno el metodo Archivos
             image.save(location_two + filename + ".jpg")
 
@@ -243,8 +252,11 @@ def EvaluarString(string): #Quita los espacios del nombre del archivo de imagen
             final += string[cnt]
 
         
-        if(cnt > value and string[cnt] not in (' ',a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q)):
-            final += string[cnt]
+        try:
+            if(cnt > value and string[cnt] not in (' ',a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q)):
+                final += string[cnt]
+        except:
+            pass
 
         
         cnt+=1
@@ -347,10 +359,10 @@ LabelTwo = Label(text = "Directorio de imagenes (Origen): ", font = ("Calibri", 
 LabelThree = Label(text = "Directorio de imagenes (Destino): ", font = ("Calibri", 12)).place(x = 20, y = 140) #Creamos labels de texto
 
 Origen = StringVar() #Tipo String
-Origen.set("C:/") #Definimos el string del campo de texto que vamos a crear
+Origen.set("") #Definimos el string del campo de texto que vamos a crear
 txtOrigen = Entry(ventana, textvariable = Origen).place(bordermode=OUTSIDE, height=15,width=300, x=260, y=108) #Campo de texto
 Destino = StringVar()
-Destino.set("C:/")
+Destino.set("")
 txtDestino = Entry(ventana, textvariable = Destino).place(bordermode=OUTSIDE, height=15,width=300, x=260, y=148)
 
 ##T = Text(ventana, height=15, width=90, state = "disable").place(x=5, y=280)
