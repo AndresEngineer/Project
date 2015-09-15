@@ -8,6 +8,7 @@ from PIL import Image, ImageTk #Paquete Pillow para instalar Windows: cmd -> pyt
 import tkFileDialog 
 import glob, os #Librerias Glob y Os
 from pytesser import image_to_string, image_file_to_string
+import time
 # Este codigo es para guiarme...
 
 def crop_image(name):
@@ -32,10 +33,16 @@ def crop_image(name):
 
     # Find the index of the largest contour
     areas = [cv2.contourArea(c) for c in contours]
-    max_index = np.argmax(areas)
-    cnt=contours[max_index]
+    try:
+        max_index = np.argmax(areas)
+        cnt=contours[max_index]
+        x,y,w,h = cv2.boundingRect(cnt)
+    except:
+        return 0, 0, 0, 0
+        pass
+    
 
-    x,y,w,h = cv2.boundingRect(cnt)
+    
 
     #cv2.rectangle(im,(x,y),(x+w,y+h),(0,255,0),2)
 
@@ -43,6 +50,7 @@ def crop_image(name):
     #crop_img = im[y:y+h+5,x:x+w+5]
 
     return x, y, w, h
+   
 
 
 
@@ -60,6 +68,9 @@ def Procesar():
     ErrorCount = 0
     Success = 0
     ErrorDesconocido = 0
+
+    log = ""
+    errorlog = ""
     
     botonCinco = ttk.Button(ventana, text = "Ir a la carpeta procesada", command = Function, state = ACTIVE).place(height = 30, width = 300,x = 240, y = 220)
     
@@ -106,14 +117,16 @@ def Procesar():
         #print string
         try:
             os.rename(infile, string)
+            infile = string
         except:
             pass
-        infile = string
+        
         
         
       
         im = Image.open(infile) # Aqui abre el archivo *.jpg
         #im.thumbnail(size, Image.ANTIALIAS) # Aqui se le asigna el size a la imagen que se va a exportar
+
         x, y, w, h = crop_image(infile)
         
         if(x == 0 and y == 0 and w == 0 and h == 0):
@@ -167,17 +180,28 @@ def Procesar():
             Success+=1
             T.insert(END, infile + "\n")
             #cv2.imwrite(location + filename + ".jpg", image) #Exporta la imagen y la guarda con el nombre file que retorno el metodo Archivos
-            image.save(location + filename + ".jpg")
+            try:
+                image.save(location + filename + ".jpg")
+                log+=infile+"\n"
+            except:
+                ErrorDesconocido+=1
+                pass
 
         else:
 ##            T.insert(END, str(location_two) + str(filename) + ".jpg" + "\n")
             ErrorCount += 1
             T.insert(END, infile + " # Error" + "\n" )
             #cv2.imwrite(location_two + filename + ".jpg", image) #Exporta la imagen y la guarda con el nombre file que retorno el metodo Archivos
-            image.save(location_two + filename + ".jpg")
+            try:
+                image.save(location_two + filename + ".jpg")
+                errorlog+=infile+"\n"
+            except:
+                ErrorDesconocido+=1
+                pass
 
         cnt+=1
 
+    Log(log, errorlog, location)
     root = Tk() #Creamos la ventana
     ttk.Style().configure("Button", padding = 6, relief = "flat", background = "#ccc")
     botonSalir = Button(root, text = "OK", command = root.destroy)
@@ -192,8 +216,22 @@ def Procesar():
     #T.config(state = "disable")
     root.mainloop()
     
-        
     
+        
+def Log(log, errores,  location):
+    
+    
+    ahora = time.strftime("%c")
+    archivo = open(location + "default.txt", 'w') # 'w' es de write para crear el archivo
+    #Aqui se edita el .txt con el parametro string que recibiÃƒÂ³ la funcion
+    archivo = open(location + "default.txt", 'a')
+    archivo.write("="*50 + "\n\nFecha y hora del reporte %s"  % ahora + "\n\n" + "="*50 + "\n\n")
+    archivo.write("="*50 + "\n\nSatisfactoriamente procesadas:\n\n" + "="*50 + "\n\n")
+    archivo.write(log)
+    archivo.write("="*50 + "\n\nErrores en procesamiento:\n\n" + "="*50 + "\n\n")
+    archivo.write(errores)
+
+
 
         
 
@@ -204,6 +242,7 @@ def EvaluarString(string): #Quita los espacios del nombre del archivo de imagen
     t = len(string)-1
     flag = t
     cnt = 0
+    value = None
 
 ##    ¡	161	u’\xa1’	\xc2\xa1	\xa1	inverted exclamation mark
 ##    ¿	191	u’\xbf’	\xc2\xbf	\xbf	inverted question mark
