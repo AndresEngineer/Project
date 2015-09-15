@@ -1,19 +1,35 @@
-# Procesamiento OCR
+"""
+    Project: OCR Image process
+    Project Version: 1.0
+    Language: Python
+    Language Version: 2.7.10
+    Libraries: PIL, numpy, cv2, time, glob, os, ttk, Tkinter, pytesser Open Source
+    Authors: 
+            Git: AndresEngineer
+            Git: Aqt01
+            
+            Dev: andrespengineer@gmail.com
+            Dev: lowell.abbott@gmail.com
+            
+    This is free software, based on open source. Developed in Spanish.
+    
+"""
 
-import numpy as np
-import cv2 
-from Tkinter import *
-import ttk
-from PIL import Image, ImageTk #Paquete Pillow para instalar Windows: cmd -> python -m pip install Pillow
-import tkFileDialog 
-import glob, os #Librerias Glob y Os
-from pytesser import image_to_string, image_file_to_string
-import time
-# Este codigo es para guiarme...
+import numpy as np # Math library
+import cv2 # OpenCV package from Image
+from Tkinter import * # Tkinter for python GUI
+import ttk #ttk from Tkinter style
+from PIL import Image, ImageTk #Pillow package to install Windows: cmd -> pip install python -m Pillow
+import tkFileDialog # tk File
+import glob, os #Glob and Os Library
+from pytesser import image_to_string, image_file_to_string # pytesser Image OCR process library
+import time # Time library
 
+
+# Method to Crop Image
 def crop_image(name):
     
-    
+    # Readname Exception
     try:
         im = cv2.imread(name)
     except:
@@ -22,17 +38,20 @@ def crop_image(name):
         w = 0
         h = 0
         return x, y, w, h
-    #im = cv2.medianBlur(im,5)
+        
+    #im = cv2.medianBlur(im,5) # To add blur
     hsv_img = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
-    COLOR_MIN = np.array([10, 10, 10],np.uint8)
-    COLOR_MAX = np.array([255, 255, 255],np.uint8)
-    frame_threshed = cv2.inRange(hsv_img, COLOR_MIN, COLOR_MAX)
+    COLOR_MIN = np.array([10, 10, 10],np.uint8) # define color contours in range min
+    COLOR_MAX = np.array([255, 255, 255],np.uint8) # define color contours in range max
+    frame_threshed = cv2.inRange(hsv_img, COLOR_MIN, COLOR_MAX) # Finding contours in range (min, max)
     imgray = frame_threshed
     ret,thresh = cv2.threshold(frame_threshed,127,255,0)
-    null, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    null, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) 
 
     # Find the index of the largest contour
     areas = [cv2.contourArea(c) for c in contours]
+    
+    # Index not found exception
     try:
         max_index = np.argmax(areas)
         cnt=contours[max_index]
@@ -44,19 +63,19 @@ def crop_image(name):
 
     
 
-    #cv2.rectangle(im,(x,y),(x+w,y+h),(0,255,0),2)
+    #cv2.rectangle(im,(x,y),(x+w,y+h),(0,255,0),2) # Trace a rectangle shape around the image
 
 
-    #crop_img = im[y:y+h+5,x:x+w+5]
+    #crop_img = im[y:y+h+5,x:x+w+5] # to Crop image
 
-    return x, y, w, h
+    return x, y, w, h # Return values of dimensions
    
 
 
 
 
 
-def Function():
+def Function(): # Open a directory name
     import os
 
     os.startfile(Destino.get() + "/Procesado")
@@ -64,90 +83,102 @@ def Function():
 def Procesar():
 
 
-    size = 1022, 653 #Tamano en la que se exportara la imagen
-    ErrorCount = 0
-    Success = 0
-    ErrorDesconocido = 0
+    size = 1022, 653 #Size of image
+    ErrorCount = 0 # Error Counter
+    Success = 0 # Success Image
+    ErrorDesconocido = 0 # Unknown error
 
-    log = ""
-    errorlog = ""
+    log = "" # Log string from Successful image process
+    errorlog = "" # Log string from ERROR image process
     
+    
+    # Activate a button when Process is called
     botonCinco = ttk.Button(ventana, text = "Ir a la carpeta procesada", command = Function, state = ACTIVE).place(height = 30, width = 300,x = 240, y = 220)
     
     
 
-    origen = Origen.get()
-    destino = Destino.get()
-
+    origen = Origen.get() # Get text from Field Origen
+    destino = Destino.get() #Get text from Field destino
+    
+    #Exception to create a directory
     try:
         directory = destino + "/Procesado" #Intenta crear el repositorio (carpeta) si no esta creado con el nombre Procesado
         os.mkdir(directory)
         
     except:
-        pass #Si ya esta creado, continua
+        pass # If have lready created
 
-    location = directory + "/" # Especifica la ruta donde se guardarÃ¡n las imagenes procesadas
+    location = directory + "/" # Specifies where the images created will be saved.
 
     try:
-        Errores = location + "Errores" #Intenta crear el repositorio (carpeta) si no esta creado con el nombre Procesado
+        Errores = location + "Errores" # Try to create the folder where the images are stored error
         os.mkdir(Errores)
         
     except:
-        pass #Si ya esta creado, continua
+        pass # If have already created
 
-    location_two = Errores + "/"
+    location_two = Errores + "/" # Location from Errors
     
 
-    cnt = 1 #Para renombrar strings con errores
+    cnt = 1 # Rename string with errors counter to cast in advance
   
-
-    suma = (len(glob.glob(origen + "*.jpg")) + len(glob.glob(origen + "*.png")) + len(glob.glob(origen + "*.jpeg")) + len(glob.glob(origen + "*.gif")) + len(glob.glob(origen + "*.wmp")))
-    if(suma != 0):
-        div = (740 / suma) 
     
+    # Sum of elements in directory with extensions specified (.jpg, .png, etc)
+    suma = (len(glob.glob(origen + "*.jpg")) + len(glob.glob(origen + "*.png")) + len(glob.glob(origen + "*.jpeg")) + len(glob.glob(origen + "*.gif")) + len(glob.glob(origen + "*.wmp")))
+    
+    if(suma != 0): # If sum isn't Zero
+        div = (740 / suma)  # Make a div
+
+    # Critic Operation
     for infile in glob.glob(origen + "*.jpg") or glob.glob(origen + "*.png") or glob.glob(origen + "*.jpeg") or glob.glob(origen + "*.gif") or glob.glob(origen + "*.wmp"): #Busca todos los archivos de la ubicacion especificada con la extension *.jpg
 
-        flag = 0
+        flag = 0 # Flag
         
-        progressbar.step(div)
-        ventana.update()
+        progressbar.step(div) # Progressbar 
+        ventana.update() # Update master Tk
         
-        string = EvaluarString(infile)
-        #print infile
-        #print string
+        # Evaluates and modifies the string to remove spaces and invalid characters in the path as Pytesser not process all the strings.
+        string = EvaluarString(infile)  
+        #print infile # To debug
+        #print string # To debug
+        
+        # Rename exception, if infile equals to string
         try:
             os.rename(infile, string)
             infile = string
         except:
-            pass
+            pass # If infile is equals to string
         
         
         
       
-        im = Image.open(infile) # Aqui abre el archivo *.jpg
-        #im.thumbnail(size, Image.ANTIALIAS) # Aqui se le asigna el size a la imagen que se va a exportar
+        im = Image.open(infile) # Open image File
+        #im.thumbnail(size, Image.ANTIALIAS) # Default size from image defined up
 
-        x, y, w, h = crop_image(infile)
+        x, y, w, h = crop_image(infile) # x, y, w, h get values from crop_image function return
         
+        # If success exception
         if(x == 0 and y == 0 and w == 0 and h == 0):
-            ErrorDesconocido += 1
-            continue
+            ErrorDesconocido += 1 # Unknown error count ++
+            continue # Skip all below
         
-        #im.crop((int(x+x-x*0.20)+10, y+y/2+10, w+y, h - h/4 - 40))
-        image = im.crop((x, y, w+x, y+h))
-        im = image
-        im.thumbnail(size, Image.ANTIALIAS)
+        #im.crop((int(x+x-x*0.20)+10, y+y/2+10, w+y, h - h/4 - 40)) # Default coordinates values
+        image = im.crop((x, y, w+x, y+h)) # Crop rectangle image.
+        im = image # im get image value
+        im.thumbnail(size, Image.ANTIALIAS) # resize image to default size defined up
         
-        #im = im.crop((int(x*0.70)+10, y/2 + 10 , w , h/4 + 40))
-        #im = im.crop((294, 135, 1022, 203))
+        #im = im.crop((int(x*0.70)+10, y/2 + 10 , w , h/4 + 40)) # To debug
+        #im = im.crop((294, 135, 1022, 203)) # to debug
         
+        # Image crop with coordinates default
         try:
             im = im.crop((294, 100, 1022, 250))
         except:
-            pass
+            pass # If cant crop.
         
+        # To debug, coordinates default value
         
-##        x = int(x*0.70)+10
+##        x = int(x*0.70)+10 
 ##        y = y/2 + 10
 ##        w = w
 ##        h = h/4 + 40
@@ -159,60 +190,68 @@ def Procesar():
         
         
         
-        text = image_to_string(im)
+        text = image_to_string(im) # Image to text with pytesseract, return a string
 ##        text = image_file_to_string(infile)
 ##        text = image_file_to_string(infile, graceful_errors=True)
        # print(text)
 
+        
+        # Here ID digits are extracted to rename the file with
+        filename = Archivos(text, location) 
+        
+        
+        if filename is None: # If cant get correct name returned
+            filename = "Error" + str(cnt) # file name get name
+            flag = 1 # Flag if error
 
-        filename = Archivos(text, location) # ******** Aqui deberiaa recibir como parametro el texto -> prueba generado de la imagen con pytesseract package ********
-        
-        
-        if filename is None:
-            filename = "Error" + str(cnt)
-            flag = 1
-
         
 
         
-        if(flag == 0):
-##            T.insert(END, str(location) + str(filename) + ".jpg" + "\n")
-            Success+=1
-            T.insert(END, infile + "\n")
-            #cv2.imwrite(location + filename + ".jpg", image) #Exporta la imagen y la guarda con el nombre file que retorno el metodo Archivos
+        if(flag == 0): # If not error
+##            T.insert(END, str(location) + str(filename) + ".jpg" + "\n") # To show in Text field
+            Success+=1 # Success count increases
+            T.insert(END, infile + "\n") # Show route from file in Text Field
+            #cv2.imwrite(location + filename + ".jpg", image) 
+            
+            # Exception if cant save image
             try:
                 image.save(location + filename + ".jpg")
                 log+=infile+"\n"
             except:
-                ErrorDesconocido+=1
-                pass
+                ErrorDesconocido+=1 # Unknown error increases
+                pass 
 
-        else:
+        else: # If flag == 1, as ERROR
 ##            T.insert(END, str(location_two) + str(filename) + ".jpg" + "\n")
-            ErrorCount += 1
-            T.insert(END, infile + " # Error" + "\n" )
+            ErrorCount += 1 # Error counter increases
+            T.insert(END, infile + " # Error" + "\n" ) # Show route in textfield from error file
             #cv2.imwrite(location_two + filename + ".jpg", image) #Exporta la imagen y la guarda con el nombre file que retorno el metodo Archivos
+            
+            # Exception if cant save image
             try:
                 image.save(location_two + filename + ".jpg")
-                errorlog+=infile+"\n"
+                errorlog+=infile+"\n" # String for log
             except:
                 ErrorDesconocido+=1
                 pass
 
         cnt+=1
 
-    Log(log, errorlog, location)
-    root = Tk() #Creamos la ventana
-    ttk.Style().configure("Button", padding = 6, relief = "flat", background = "#ccc")
-    botonSalir = Button(root, text = "OK", command = root.destroy)
-    botonSalir.pack(side = BOTTOM)
-    root.title("Procesamiento de Datos OCR") # Definimos el titulo de la ventana
-    Area = Text(root, height=5, width=40)
-    Area.pack(side = LEFT)
+    Log(log, errorlog, location) # Creates a log txt file in directory
+    root = Tk() # Creates a new window
+    ttk.Style().configure("Button", padding = 6, relief = "flat", background = "#ccc") # Window button
+    botonSalir = Button(root, text = "OK", command = root.destroy) # Exit button
+    botonSalir.pack(side = BOTTOM) # Button position
+    root.title("Procesamiento de Datos OCR") # Window title
+    Area = Text(root, height=5, width=40) # Window size
+    Area.pack(side = LEFT) # TextField place
+    
+    #Text area LOG
     Area.insert(END, "Imagenes Procesadas: " + str(suma) + "\nErrores: " + str(ErrorCount) +
                 "\nSatisfactoriamente Procesadas: " + str(Success) + "\nSobreescritura (Repeticiones): " + str(suma - (ErrorCount + Success)) +
                 "\nErroresDesconocidos: " + str(ErrorDesconocido))
-    progressbar.stop()
+                
+    progressbar.stop() # Progressbar stop
     #T.config(state = "disable")
     root.mainloop()
     
@@ -222,8 +261,9 @@ def Log(log, errores,  location):
     
     
     ahora = time.strftime("%c")
-    archivo = open(location + "default.txt", 'w') # 'w' es de write para crear el archivo
-    #Aqui se edita el .txt con el parametro string que recibiÃƒÂ³ la funcion
+    archivo = open(location + "default.txt", 'w') # Create a file named default.txt rewrite if is created
+    
+    # Edit txt with all writes
     archivo = open(location + "default.txt", 'a')
     archivo.write("="*50 + "\n\nFecha y hora del reporte %s"  % ahora + "\n\n" + "="*50 + "\n\n")
     archivo.write("="*50 + "\n\nSatisfactoriamente procesadas:\n\n" + "="*50 + "\n\n")
